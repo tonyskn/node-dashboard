@@ -16,7 +16,7 @@ module.exports = function(grunt) {
 
     watch: {
       express: {
-        files:  [ 'src/server.js' ],
+        files:  [ 'src/*.js' ],
         tasks:  [ 'express:dev' ],
         options: {
           nospawn: true //Without this option specified express won't be reloaded
