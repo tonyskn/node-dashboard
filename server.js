@@ -8,7 +8,7 @@ var express = require('express'),
 
 app.use(express.static('public'));
 
-server.listen(4320);
+server.listen(process.env.PORT || 4320);
 
 io.sockets.on('connection', function (socket) {
   socket.emit('news', { hello: 'world' });
