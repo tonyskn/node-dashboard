@@ -1,9 +1,32 @@
+<!doctype html>
+  <head>
+    <meta charset="utf-8">
+    <title>Dashboard</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width"/>
 
-<script src="/socket.io/socket.io.js"></script>
-<script>
-  var socket = io.connect('http://localhost:4320');
-  socket.on('stats', function (data) {
-    console.log(data);
-  });
-</script>
+    <link rel="stylesheet" href="bower_components/bootstrap-sass/bootstrap-2.3.2.css">
+    <link rel="stylesheet" href="bower_components/bootstrap-sass/bootstrap-responsive-2.3.2.css">
 
+  </head>
+  <body>
+    <div id="placeholder" class="well"></div>
+    
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="bower_components/jquery/jquery.js"></script>
+    <script src="bower_components/underscore/underscore.js"></script>
+
+    <script>
+      var socket = io.connect('/');
+      socket.on('stats', function (data) {
+        Object.keys(data).forEach(function(k) {
+          var stats = data[k]['4hours'];
+          var total = stats.reduce(function(sum, s) { return sum + s[1]; }, 0);
+
+          console.log(k, '4hours', total);
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -6,7 +6,7 @@ var redis = require('redis').createClient(),
 redis.on("error", function(err) { console.log("Error: ", err); });
 
 var randomDelay = function() {
-  return Math.floor( Math.random() * 15 * 1000 );
+  return Math.floor( Math.random() * 15 * 100 );
 };
 
 // Just hit the 'messages' counter and wait between
