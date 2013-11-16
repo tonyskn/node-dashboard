@@ -8,7 +8,7 @@ module.exports = function(grunt) {
     express: {
       dev: {
         options: {
-          script: 'server.js',
+          script: 'src/server.js',
           port: 4320
         }
       }
@@ -16,7 +16,7 @@ module.exports = function(grunt) {
 
     watch: {
       express: {
-        files:  [ 'server.js' ],
+        files:  [ 'src/server.js' ],
         tasks:  [ 'express:dev' ],
         options: {
           nospawn: true //Without this option specified express won't be reloaded

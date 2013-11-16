@@ -6,7 +6,7 @@ var express = require('express'),
     server = http.createServer(app),
     io = require('socket.io').listen(server);
 
-app.use(express.static('public'));
+app.use(express.static(__dirname + '/../public'));
 
 server.listen(process.env.PORT || 4320);
 
