@@ -10,23 +10,54 @@
 
   </head>
   <body>
-    <div id="placeholder" class="well"></div>
+    <script id="counter-template" type="text/x-handlebars-template">
+      {{#each this}}
+        <div class="well span4">
+          <p class="lead">key: {{@key}}</p>
+          {{#each this}}
+            <div class="row-fluid">
+              <div class="span2">{{@key}}</div>
+              <div class="span2">{{totalCount this}}</div>
+            </div>
+          {{/each}}
+        </div>
+      {{/each}}
+    </script>
     
+    <p class="lead"/>
+    <div class="container-fluid">
+      <h1>Dashboard</h1>
+      <div id="stats" class="row-fluid"></div>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="bower_components/jquery/jquery.js"></script>
+    <script src="bower_components/flot/jquery.flot.js"></script>
     <script src="bower_components/underscore/underscore.js"></script>
+    <script src="bower_components/handlebars/handlebars.js"></script>
 
     <script>
-      var socket = io.connect('/');
-      socket.on('stats', function (data) {
-        Object.keys(data).forEach(function(k) {
-          var stats = data[k]['4hours'];
-          var total = stats.reduce(function(sum, s) { return sum + s[1]; }, 0);
+      var template = Handlebars.compile($('#counter-template').html());
 
-          console.log(k, '4hours', total);
-        });
+      Handlebars.registerHelper('totalCount', function(chunks) {
+        return chunks.reduce(function(sum, c) {
+          return sum + c[1];
+        }, 0);
       });
+
+      var data = {};
+      io.connect('/').on('stats', function (newData) {
+        if (!_.isEmpty(newData)) {
+          data = _.extend(data, newData);
+          $('#stats').html(template(data));
+        } else {
+          $('#stats').html('<em>(no data yet)</em>');
+        }
+      });
+
+      // Reload page every 10mns top update counters
+      // in case nothing is happenning
+      setTimeout(function() { location.reload(); }, 10*60*1000);
     </script>
   </body>
 </html>

@@ -13,9 +13,9 @@ var redis = require('redis'),
  * Define supported granularities
  */
 ts.granularities = {
-  '1minute'    : { ttl: ts.hours(1), duration: ts.minutes(1) },
-  'half-hour'  : { ttl: ts.days(1), duration: ts.hours(0.5) },
-  '4hours'     : { ttl: ts.days(7), duration: ts.hours(4) }
+  'last_hour' : { ttl: ts.hours(1), duration: ts.minutes(1) },
+  'last_day'  : { ttl: ts.days(1), duration: ts.hours(0.5) },
+  'last_week' : { ttl: ts.days(7), duration: ts.hours(4) }
 };
 
 var HitsHandler = module.exports = function() {
