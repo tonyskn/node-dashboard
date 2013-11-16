@@ -15,13 +15,15 @@ var async = require('async'),
 app.use(express.static(__dirname + '/../public'));
 
 handler.fetchCounters(function() {
-  /** On new connection, just send the full stats */
-  io.sockets.on('connection', function (socket) {
-    handler.getFullStats(function(err, stats) { socket.emit('stats', stats); });
-  });
+  /** Start listening on Redis channels */
+  handler.start();
 
-  /** On hit, broadcast the stats for that particular counter */
-  handler.onHit(function(err, stats) { io.sockets.emit('stats', stats); });
+  /** Broadcast fresh stats to clients every sec */
+  setInterval(function() {
+    handler.getFullStats(function(_, stats) {
+      io.sockets.emit('stats', stats);
+    });
+  }, 1000);
 }); 
 
 /** Listen for connections */

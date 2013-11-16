@@ -70,7 +70,7 @@ HitsHandler.prototype.getFullStats = function(callback) {
   return this;
 };
 
-HitsHandler.prototype.onHit = function(callback) {
+HitsHandler.prototype.start = function(callback) {
   var self = this;
 
   /** Just listen on redis 'hits:*' channels for timestamps */
@@ -80,24 +80,15 @@ HitsHandler.prototype.onHit = function(callback) {
       var counterName = channel.split(':')[1];
 
       /** If this counter is new, add it
-       * to the list of known counters
-       */
+       * to the list of known counters */
       if (!_.contains(self.counters, counterName)) {
         client.sadd("stats", counterName, function() {
           self.counters.push(counterName);
         });
       }
 
-      /** Record a hit, then query fresh
-       * statistics for counterName and send
-       * them to connected browsers
-       */
-      ts.recordHit(counterName, +timestamp)
-        .exec(function() {
-          self.getStatsForKey(counterName, function(err, stats) {
-            callback(err, _.object([counterName], [stats]));
-          });
-        });
+      /* Record hit */
+      ts.recordHit(counterName, +timestamp).exec(function() {});
     });
   });
 
