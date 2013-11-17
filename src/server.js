@@ -32,5 +32,7 @@ setInterval(function() {
 }, 1000);
 
 /** Listen for connections */
-server.listen(process.env.PORT || 4320);
+server.listen(process.env.PORT || 3000, function() {
+  console.log("Server listening on port", process.env.PORT || 3000);
+});
 

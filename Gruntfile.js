@@ -8,8 +8,7 @@ module.exports = function(grunt) {
     express: {
       dev: {
         options: {
-          script: 'src/server.js',
-          port: 4320
+          script: 'src/server.js'
         }
       }
     },

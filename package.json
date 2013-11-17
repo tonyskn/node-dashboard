@@ -7,6 +7,13 @@
     "Redis",
     "Websockets"
   ],
+  "engines": {
+      "node": ">=0.10.0"
+  },
+  "repository": {
+      "type": "git",
+      "url": "git://github.com/tonyskn/node-dashboard.git"
+  },
   "author": "Tony Sokhon",
   "license": "MIT",
   "dependencies": {
