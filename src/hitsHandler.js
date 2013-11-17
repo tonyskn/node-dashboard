@@ -20,24 +20,36 @@ ts.granularities = {
 
 var HitsHandler = module.exports = function() {
   /* internal cache for the list of known counters */
+  /* it will updated each time a hit is received */
   this.counters = [];
 };
-
 
 /**
  * Fetch list of known counters from redis
  */
-HitsHandler.prototype.fetchCounters = function(callback) {
+HitsHandler.prototype.fetchCounters = function() {
   var self = this;
 
   client.smembers("stats", function(err, results) {
     self.counters = results;
-    callback(err);
   });
 
   return this;
 };
 
+/**
+ * Remove a specific counter from redis
+ */
+HitsHandler.prototype.removeCounter = function(counter, callback) {
+  var self = this;
+
+  client.srem("stats", counter, function(err) {
+    self.counters = _.without(self.counters, counter);
+    callback(err);
+  });
+
+  return this;
+};
 
 /**
  * Get full granularity stats for the given key
@@ -49,6 +61,8 @@ HitsHandler.prototype.getStatsForKey = function(key, callback) {
             function(gran, step) {
               var size = ts.granularities[gran].ttl / ts.granularities[gran].duration;
               ts.getHits(key, gran, size, function(err, stats) {
+                // redis-timeseries yields timestamps in secs
+                // convert them to values in ms before yielding them client-side
                 step(err, stats.map(function(s) { return [s[0]*1000, s[1]]; }));
               });
             }, function(err, data) {
@@ -72,14 +86,19 @@ HitsHandler.prototype.getFullStats = function(callback) {
   return this;
 };
 
-HitsHandler.prototype.start = function(callback) {
+HitsHandler.prototype.start = function() {
   var self = this;
+
+  self.fetchCounters();
 
   /** Just listen on redis 'hits:*' channels for timestamps */
   var redisHitsHandler = redis.createClient(redisPort, redisHost);
   redisHitsHandler.on('psubscribe', function() {
     redisHitsHandler.on('pmessage', function(pattern, channel, timestamp) {
       var counterName = channel.split(':')[1];
+
+      /** Fetch new list of counters on every hit */
+      self.fetchCounters();
 
       /** If this counter is new, add it
        * to the list of known counters */
@@ -90,7 +109,7 @@ HitsHandler.prototype.start = function(callback) {
       }
 
       /* Record hit */
-      ts.recordHit(counterName, +timestamp).exec(function() {});
+      ts.recordHit(counterName, +timestamp).exec();
     });
   });
 

@@ -10,24 +10,22 @@
 
   </head>
   <body>
-    <script id="counter-template" type="text/x-handlebars-template">
-      {{#each this}}
-        <div class="well span3">
-          <p class="lead">{{@key}}</p>
-          {{setKey this @key}}
-          {{#each this}}
-            <div class="row-fluid" id="{{key}}_{{@key}}" style="height:200px;"/>
-            {{drawPlot this key @key}}
-          {{/each}}
-        </div>
-      {{/each}}
-    </script>
-    
     <div class="container-fluid">
       <h1>Dashboard</h1>
       <p class="lead"/>
       <div id="stats" class="row-fluid"></div>
     </div>
+
+    <script id="counter-template" type="text/x-handlebars-template">
+      <div class="well span3" id="{{key}}">
+        <p class="lead">
+          {{key}}<button class="btn btn-danger btn-small pull-right">Remove</button>
+        </p>
+        {{#each chunks}}
+          <div id="{{../key}}_{{@key}}" style="height:200px;"/>
+        {{/each}}
+      </div>
+    </script>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="bower_components/jquery/jquery.js"></script>
@@ -38,45 +36,68 @@
     <script src="bower_components/handlebars/handlebars.js"></script>
 
     <script>
+(function() {
       var template = Handlebars.compile($('#counter-template').html());
 
-      Handlebars.registerHelper('setKey', function(chunks, key) {
-        Object.keys(chunks).reduce(function(result, k) {
-          result[k] = chunks[k];
-          result[k].key = key;
-          return result;
-        }, {});
-      });
-
-      Handlebars.registerHelper('drawPlot', function(chunks, key, gran) {
+      var dataView = function(chunks, gran) {
         var total = chunks.reduce(function(sum, c) { return sum + c[1]; }, 0);
+        return [{
+          data: chunks,
+          lines: { show: true, fill: true},
+          label: gran + " (" + total + ")"
+        }];
+      };
 
-        setTimeout(function() {
-          $.plot("#"+key+"_"+gran, [{
-            data: chunks,
-            lines: { show: true, fill: true},
-            label: gran + " (" + total + ")"
-          }], {
-            canvas:true,
-            xaxis: {mode: 'time'},
-            yaxis: {min: 0}
+      var plots = {};
+      var updateDOM = function(data) {
+        var key = data.key;
+        $('#'+key+' button').click(function() {
+          $.ajax({url: '/stats/'+key, type: 'DELETE'});
+        });
+
+        Object.keys(data.chunks).forEach(function(gran) {
+          plots[key] = plots[key] || {};
+          plots[key][gran] = $.plot("#"+key+"_"+gran,
+            dataView(data.chunks[gran], gran), {
+              canvas:true,
+              xaxis: {mode: 'time'},
+              yaxis: {min: 0}
+            });
+        });
+      };
+
+      io.connect('/').on('stats', function (data) {
+        if (!_.isEmpty(data)) {
+          // Update existing plots or render
+          // new stats containers for new keys
+          Object.keys(data).forEach(function(key) {
+            if (!plots[key]) {
+              $('#stats em').remove();
+              var view = { key: key, chunks: data[key] };
+              $('#stats').append(template(view));
+              updateDOM(view);
+            } else {
+              Object.keys(data[key]).forEach(function(gran) {
+                plots[key][gran].setData(dataView(data[key][gran], gran));
+                plots[key][gran].setupGrid();
+                plots[key][gran].draw();
+              });
+            }
           });
-        }, 0);
-      });
 
-      var data = {};
-      io.connect('/').on('stats', function (newData) {
-        if (!_.isEmpty(newData)) {
-          data = _.extend(data, newData);
-          $('#stats').html(template(data));
+          // Remove stats containers which are no longer tracked
+          Object.keys(plots).forEach(function(key) {
+            if (!data[key]) {
+              $('#'+key).remove();
+              delete plots[key];
+            }
+          });
         } else {
           $('#stats').html('<em>(no data yet)</em>');
+          plots = {};
         }
       });
-
-      // Reload page every 10mns top update counters
-      // in case nothing is happenning
-      setTimeout(function() { location.reload(); }, 10*60*1000);
+})();
     </script>
   </body>
 </html>
