@@ -26,9 +26,11 @@ handler.start();
 
 /** Broadcast fresh stats to clients every sec */
 setInterval(function() {
-  handler.getFullStats(function(_, stats) {
-    io.sockets.emit('stats', stats);
-  });
+  if (!_.isEmpty(io.sockets.sockets)) {
+    handler.getFullStats(function(_, stats) {
+      io.sockets.emit('stats', stats);
+    });
+  }
 }, 1000);
 
 /** Listen for connections */
