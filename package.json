@@ -1,0 +1,26 @@
+{
+  "name": "dashboard",
+  "version": "0.1.0",
+  "description": "Generic real-time dashboard powered by Node.js & Redis",
+  "keywords": [
+    "Dashboard",
+    "Redis",
+    "Websockets"
+  ],
+  "author": "Tony Sokhon",
+  "license": "MIT",
+  "dependencies": {
+    "redis-timeseries": "~0.2.1",
+    "redis": "~0.9.0",
+    "hiredis": "~0.1.15",
+    "socket.io": "~0.9.16",
+    "express": "~3.4.4",
+    "async": "~0.2.9",
+    "underscore": "~1.5.2"
+  },
+  "devDependencies": {
+    "grunt-contrib-watch": "~0.5.3",
+    "grunt": "~0.4.1",
+    "grunt-express-server": "~0.4.5"
+  }
+}
