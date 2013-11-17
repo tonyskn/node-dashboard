@@ -12,36 +12,55 @@
   <body>
     <script id="counter-template" type="text/x-handlebars-template">
       {{#each this}}
-        <div class="well span4">
-          <p class="lead">key: {{@key}}</p>
+        <div class="well span3">
+          <p class="lead">{{@key}}</p>
+          {{setKey this @key}}
           {{#each this}}
-            <div class="row-fluid">
-              <div class="span2">{{@key}}</div>
-              <div class="span2">{{totalCount this}}</div>
-            </div>
+            <div class="row-fluid" id="{{key}}_{{@key}}" style="height:200px;"/>
+            {{drawPlot this key @key}}
           {{/each}}
         </div>
       {{/each}}
     </script>
     
-    <p class="lead"/>
     <div class="container-fluid">
       <h1>Dashboard</h1>
+      <p class="lead"/>
       <div id="stats" class="row-fluid"></div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="bower_components/jquery/jquery.js"></script>
     <script src="bower_components/flot/jquery.flot.js"></script>
+    <script src="bower_components/flot/jquery.flot.time.js"></script>
+    <script src="bower_components/flot/jquery.flot.canvas.js"></script>
     <script src="bower_components/underscore/underscore.js"></script>
     <script src="bower_components/handlebars/handlebars.js"></script>
 
     <script>
       var template = Handlebars.compile($('#counter-template').html());
 
-      Handlebars.registerHelper('totalCount', function(chunks) {
-        return chunks.reduce(function(sum, c) {
-          return sum + c[1];
+      Handlebars.registerHelper('setKey', function(chunks, key) {
+        Object.keys(chunks).reduce(function(result, k) {
+          result[k] = chunks[k];
+          result[k].key = key;
+          return result;
+        }, {});
+      });
+
+      Handlebars.registerHelper('drawPlot', function(chunks, key, gran) {
+        var total = chunks.reduce(function(sum, c) { return sum + c[1]; }, 0);
+
+        setTimeout(function() {
+          $.plot("#"+key+"_"+gran, [{
+            data: chunks,
+            lines: { show: true, fill: true},
+            label: gran + " (" + total + ")"
+          }], {
+            canvas:true,
+            xaxis: {mode: 'time'},
+            yaxis: {min: 0}
+          });
         }, 0);
       });
 

@@ -48,7 +48,9 @@ HitsHandler.prototype.getStatsForKey = function(key, callback) {
   async.map(Object.keys(ts.granularities),
             function(gran, step) {
               var size = ts.granularities[gran].ttl / ts.granularities[gran].duration;
-              ts.getHits(key, gran, size, step);
+              ts.getHits(key, gran, size, function(err, stats) {
+                step(err, stats.map(function(s) { return [s[0]*1000, s[1]]; }));
+              });
             }, function(err, data) {
               var result = _.object( Object.keys(ts.granularities), data );
               callback(err, result);

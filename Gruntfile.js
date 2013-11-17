@@ -25,5 +25,5 @@ module.exports = function(grunt) {
     }
   });
 
-  grunt.registerTask('default', ['express:dev', 'watch:express']);
+  grunt.registerTask('default', ['express:dev', 'watch']);
 };
