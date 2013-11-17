@@ -19,7 +19,8 @@
     <script id="counter-template" type="text/x-handlebars-template">
       <div class="well span3" id="{{key}}">
         <p class="lead">
-          {{key}}<button class="btn btn-danger btn-small pull-right">Remove</button>
+          <a href="/?keys={{key}}">{{key}}</a>
+          <button class="btn btn-danger btn-small pull-right">Remove</button>
         </p>
         {{#each chunks}}
           <div id="{{../key}}_{{@key}}" style="height:200px;"/>
@@ -35,7 +36,7 @@
     <script src="bower_components/handlebars/handlebars.js"></script>
 
     <script>
-(function() {
+(function($, io, Handlebars) {
       var template = Handlebars.compile($('#counter-template').html());
 
       var dataView = function(chunks, gran) {
@@ -65,7 +66,9 @@
         });
       };
 
-      io.connect('/').on('stats', function (data) {
+      var socket = io.connect('/');
+      socket.emit('stats', (location.search.match(new RegExp("keys=(.*?)($|\&)", "i")) || [])[1]);
+      socket.on('stats', function (data) {
         if (!$.isEmptyObject(data)) {
           // Update existing plots or render
           // new stats containers for new keys
@@ -96,7 +99,7 @@
           plots = {};
         }
       });
-})();
+})(jQuery, io, Handlebars);
     </script>
   </body>
 </html>

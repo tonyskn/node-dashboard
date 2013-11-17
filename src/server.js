@@ -9,7 +9,9 @@ var async = require('async'),
     io = require('socket.io').listen(server, {log: false}),
 
     HitsHandler = require('./hitsHandler'),
-    handler = new HitsHandler();
+    // Init handler
+    // It will poll Redis for fresh stats every second
+    handler = new HitsHandler(1000);
   
 /** Website's location */
 app.use(express.static(__dirname + '/../public'));
@@ -25,13 +27,22 @@ app.delete('/stats/:key', function(req, res) {
 handler.start();
 
 /** Broadcast fresh stats to clients every sec */
-setInterval(function() {
-  if (!_.isEmpty(io.sockets.sockets)) {
-    handler.getFullStats(function(_, stats) {
-      io.sockets.emit('stats', stats);
-    });
-  }
-}, 1000);
+io.sockets.on('connection', function(socket) {
+  /* Client has possibility to notify
+   * the server about specific keys it's
+   * interested in */
+  socket.on('stats', function(keys) {
+    socket.keys = keys && keys.split(',');
+  });
+
+  var onStats = function(stats) {
+    stats = !socket.keys ? stats : _.pick.apply(_, [stats].concat(socket.keys));
+    socket.emit('stats', stats);
+  };
+
+  handler.on('stats', onStats);
+  socket.on('disconnect', function() { handler.removeListener('stats', onStats); });
+});
 
 /** Listen for connections */
 server.listen(process.env.PORT || 3000, function() {
