@@ -60,7 +60,7 @@
           plots[key][gran] = $.plot("#"+key+"_"+gran,
             dataView(data.chunks[gran], gran), {
               canvas:true,
-              xaxis: {mode: 'time'},
+              xaxis: {mode: 'time', ticks: 2},
               yaxis: {min: 0}
             });
         });

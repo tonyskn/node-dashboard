@@ -13,6 +13,7 @@ var redis = require('redis'),
  * Define supported granularities
  */
 ts.granularities = {
+  'last_minute' : { ttl: ts.minutes(1), duration: ts.seconds(1) },
   'last_hour' : { ttl: ts.hours(1), duration: ts.minutes(1) },
   'last_day'  : { ttl: ts.days(1), duration: ts.hours(0.5) },
   'last_week' : { ttl: ts.days(7), duration: ts.hours(4) }
@@ -96,9 +97,6 @@ HitsHandler.prototype.start = function() {
   redisHitsHandler.on('psubscribe', function() {
     redisHitsHandler.on('pmessage', function(pattern, channel, timestamp) {
       var counterName = channel.split(':')[1];
-
-      /** Fetch new list of counters on every hit */
-      self.fetchCounters();
 
       /** If this counter is new, add it
        * to the list of known counters */
