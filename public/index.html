@@ -32,7 +32,6 @@
     <script src="bower_components/flot/jquery.flot.js"></script>
     <script src="bower_components/flot/jquery.flot.time.js"></script>
     <script src="bower_components/flot/jquery.flot.canvas.js"></script>
-    <script src="bower_components/underscore/underscore.js"></script>
     <script src="bower_components/handlebars/handlebars.js"></script>
 
     <script>
@@ -67,7 +66,7 @@
       };
 
       io.connect('/').on('stats', function (data) {
-        if (!_.isEmpty(data)) {
+        if (!$.isEmptyObject(data)) {
           // Update existing plots or render
           // new stats containers for new keys
           Object.keys(data).forEach(function(key) {
