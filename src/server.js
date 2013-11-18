@@ -1,6 +1,7 @@
 
 var async = require('async'),
     _ = require('underscore'),
+    fs = require('fs'),
 
     express = require('express'),
     http = require('http'),
@@ -15,6 +16,22 @@ var async = require('async'),
   
 /** Website's location */
 app.use(express.static(__dirname + '/../public'));
+
+
+var readWidget = async.memoize(function(callback) {
+  console.log("read file");
+  fs.readFile(__dirname + '/../widget/widget.js', {encoding: 'utf-8'}, callback);
+});
+
+/** Widget code! */
+app.get("/widget.js", function(req, res) {
+  readWidget(function(err, js) {
+    res.set("Content-Type", "text/javascript");
+    res.send(js.replace("%socket_address%", "/")
+               .replace("%container_id%", req.query.container)
+               .replace("%wanted_keys%", req.query.keys || ""));  
+  }); 
+});
 
 /** Start listening on Redis channels */
 handler.start();
