@@ -11,18 +11,11 @@ var async = require('async'),
     HitsHandler = require('./hitsHandler'),
     // Init handler
     // It will poll Redis for fresh stats every second
-    handler = new HitsHandler(1000);
+    handler = new HitsHandler(3000);
   
 /** Website's location */
 app.use(express.static(__dirname + '/../public'));
 
-/** API endpoint to delete a stats key */
-app.delete('/stats/:key', function(req, res) {
-  handler.removeCounter(req.params.key, function(err) {
-    res.send("Deteted!");
-  });
-});
- 
 /** Start listening on Redis channels */
 handler.start();
 

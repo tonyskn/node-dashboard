@@ -41,18 +41,6 @@ HitsHandler.prototype.fetchCounters = function(callback) {
   return this;
 };
 
-/** Remove a specific counter from redis */
-HitsHandler.prototype.removeCounter = function(counter, callback) {
-  var self = this;
-
-  client.srem("stats", counter, function(err) {
-    self.counters = _.without(self.counters, counter);
-    callback(err);
-  });
-
-  return this;
-};
-
 /** Get full granularity stats for the given key */
 HitsHandler.prototype.getStatsForKey = function(key, callback) {
   var self = this;

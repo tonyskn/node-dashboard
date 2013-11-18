@@ -16,18 +16,6 @@
       <div id="stats" class="row-fluid"></div>
     </div>
 
-    <script id="counter-template" type="text/x-handlebars-template">
-      <div class="well span3" id="{{key}}">
-        <p class="lead">
-          <a href="/?keys={{key}}">{{key}}</a>
-          <button class="btn btn-danger btn-small pull-right">Remove</button>
-        </p>
-        {{#each chunks}}
-          <div id="{{../key}}_{{@key}}" style="height:200px;"/>
-        {{/each}}
-      </div>
-    </script>
-
     <script src="/socket.io/socket.io.js"></script>
     <script src="bower_components/jquery/jquery.js"></script>
     <script src="bower_components/flot/jquery.flot.js"></script>
@@ -36,8 +24,15 @@
     <script src="bower_components/handlebars/handlebars.js"></script>
 
     <script>
-(function($, io, Handlebars) {
-      var template = Handlebars.compile($('#counter-template').html());
+(function($, io, Handlebars, socketAddress, wantedKeys) {
+      var template = Handlebars.compile(
+        '<div class="well span3" id="{{key}}">'
+         +   '<p class="lead"><a href="?keys={{key}}">{{key}}</a></p>'
+         +   '{{#each chunks}}'
+         +     '<div id="{{../key}}_{{@key}}" style="height:200px;"/>'
+         +   '{{/each}}'
+         + '</div>'
+      );
 
       var dataView = function(chunks, gran) {
         var total = chunks.reduce(function(sum, c) { return sum + c[1]; }, 0);
@@ -51,10 +46,6 @@
       var plots = {};
       var updateDOM = function(data) {
         var key = data.key;
-        $('#'+key+' button').click(function() {
-          $.ajax({url: '/stats/'+key, type: 'DELETE'});
-        });
-
         Object.keys(data.chunks).forEach(function(gran) {
           plots[key] = plots[key] || {};
           plots[key][gran] = $.plot("#"+key+"_"+gran,
@@ -66,10 +57,16 @@
         });
       };
 
-      var socket = io.connect('/');
-      socket.emit('stats', (location.search.match(new RegExp("keys=(.*?)($|\&)", "i")) || [])[1]);
-      socket.on('stats', function (data) {
-        if (!$.isEmptyObject(data)) {
+      /* Notify server about keys we're interested in */
+      var notify = function() {
+        this.emit('stats', wantedKeys);
+      };
+
+      io.connect(socketAddress)
+        .on('connect', notify)
+        .on('reconnect', notify)
+        .on('stats', function(data) {
+          if (!$.isEmptyObject(data)) {
           // Update existing plots or render
           // new stats containers for new keys
           Object.keys(data).forEach(function(key) {
@@ -99,7 +96,7 @@
           plots = {};
         }
       });
-})(jQuery, io, Handlebars);
+})(jQuery, io, Handlebars, "/", (location.search.match(new RegExp("keys=(.*?)($|\&)", "i")) || [])[1]);
     </script>
   </body>
 </html>
