@@ -18,12 +18,17 @@ ts.granularities = {
   'last_week' : { ttl: ts.days(7), duration: ts.hours(4) }
 };
 
-var HitsHandler = module.exports = function(interval) {
+var HitsHandler = module.exports = function(pollingInterval, bufferingInterval) {
   /* internal cache for the list of known counters */
-  /* it will updated each time a hit is received */
+  /* it will get updated each time a hit is received */
   this.counters = [];
   /* polling interval in ms */
-  this.interval = interval || 1000;
+  this.pollingInterval = pollingInterval || 1000;
+  /* buffering interval in ms */
+  this.bufferingInterval = bufferingInterval || 1000;
+  /* internal buffer storing events received but
+   * not pushed to Redis yet */
+  this.buffer = [];
 };
 
 /** Make HitsHandler extend EventEmitter */
@@ -72,6 +77,18 @@ HitsHandler.prototype.getFullStats = function(callback) {
   return this;
 };
 
+/* Flush buffered hits into Redis */
+HitsHandler.prototype.recordHits = function() {
+  var buffered = this.buffer;
+  this.buffer = [];
+
+  buffered.reduce(function(multi, b) {
+    return multi.recordHit(b.name, b.timestamp);
+  }, ts).exec();
+
+  return this;
+};
+
 /** Record hit in Redis */
 HitsHandler.prototype.onHit = function(counterName, timestamp) {
   var self = this; 
@@ -86,14 +103,14 @@ HitsHandler.prototype.onHit = function(counterName, timestamp) {
     });
   }
 
-  /* Record hit */
-  ts.recordHit(counterName, +timestamp).exec();
+  /* Add hit information to internal buffer */
+  this.buffer.push({ name: counterName, timestamp: +timestamp });
 
   return this;
 };
 
-/** Start the polling loop */
-HitsHandler.prototype.startPolling = function() {
+/** Start the polling/flushing loops */
+HitsHandler.prototype.setupRedisLoops = function() {
   var self = this;
 
   setInterval(function() {
@@ -104,7 +121,13 @@ HitsHandler.prototype.startPolling = function() {
         }
       });
     }
-  }, self.interval);
+  }, self.pollingInterval);
+  
+  setInterval(function() {
+    if (self.buffer.length > 0) {
+      self.recordHits();
+    }
+  }, self.bufferingInterval);
 
   return this;
 };
@@ -115,7 +138,7 @@ HitsHandler.prototype.startPolling = function() {
 HitsHandler.prototype.start = function() {
   var self = this;
 
-  self.fetchCounters(self.startPolling.bind(self));
+  self.fetchCounters(self.setupRedisLoops.bind(self));
 
   /** Listen on redis 'hits:*' channels for timestamps */
   var redisHitsHandler = redis.createClient(redisPort, redisHost);

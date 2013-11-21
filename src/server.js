@@ -11,15 +11,15 @@ var async = require('async'),
 
     HitsHandler = require('./hitsHandler'),
     // Init handler
-    // It will poll Redis for fresh stats every second
-    handler = new HitsHandler(3000);
+    // Parameters: polling / buffering intervals in ms
+    // For optimal usage, polling should be greater than buffering...
+    handler = new HitsHandler(5000, 3000);
   
 /** Website's location */
 app.use(express.static(__dirname + '/../public'));
 
 
 var readWidget = async.memoize(function(callback) {
-  console.log("read file");
   fs.readFile(__dirname + '/../widget/widget.js', {encoding: 'utf-8'}, callback);
 });
 
