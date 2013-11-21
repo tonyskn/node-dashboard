@@ -11,9 +11,8 @@ var async = require('async'),
 
     HitsHandler = require('./hitsHandler'),
     // Init handler
-    // Parameters: polling / buffering intervals in ms
-    // For optimal usage, polling should be greater than buffering...
-    handler = new HitsHandler(5000, 3000);
+    // Parameter: polling interval in ms
+    handler = new HitsHandler(5000);
   
 /** Website's location */
 app.use(express.static(__dirname + '/../public'));

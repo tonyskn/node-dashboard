@@ -17,7 +17,7 @@
   "author": "Tony Sokhon",
   "license": "MIT",
   "dependencies": {
-    "redis-timeseries": "~0.2.1",
+    "redis-timeseries": "~0.2.2",
     "redis": "~0.9.0",
     "hiredis": "~0.1.15",
     "socket.io": "~0.9.16",

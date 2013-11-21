@@ -18,17 +18,17 @@ ts.granularities = {
   'last_week' : { ttl: ts.days(7), duration: ts.hours(4) }
 };
 
-var HitsHandler = module.exports = function(pollingInterval, bufferingInterval) {
+var HitsHandler = module.exports = function(pollingInterval) {
   /* internal cache for the list of known counters */
   /* it will get updated each time a hit is received */
   this.counters = [];
   /* polling interval in ms */
   this.pollingInterval = pollingInterval || 1000;
   /* buffering interval in ms */
-  this.bufferingInterval = bufferingInterval || 1000;
+  this.bufferingInterval = 1000;
   /* internal buffer storing events received but
    * not pushed to Redis yet */
-  this.buffer = [];
+  this.buffer = {};
 };
 
 /** Make HitsHandler extend EventEmitter */
@@ -80,10 +80,11 @@ HitsHandler.prototype.getFullStats = function(callback) {
 /* Flush buffered hits into Redis */
 HitsHandler.prototype.recordHits = function() {
   var buffered = this.buffer;
-  this.buffer = [];
+  this.buffer = {};
 
-  buffered.reduce(function(multi, b) {
-    return multi.recordHit(b.name, b.timestamp);
+  Object.keys(buffered).reduce(function(multi, key) {
+    var parts = key.split(":_:");
+    return multi.recordHit(parts[0], +parts[1], buffered[key]);
   }, ts).exec();
 
   return this;
@@ -104,7 +105,8 @@ HitsHandler.prototype.onHit = function(counterName, timestamp) {
   }
 
   /* Add hit information to internal buffer */
-  this.buffer.push({ name: counterName, timestamp: +timestamp });
+  var bufferKey = counterName+":_:"+timestamp;
+  this.buffer[bufferKey] = (this.buffer[bufferKey] || 0) + 1;
 
   return this;
 };
@@ -124,7 +126,7 @@ HitsHandler.prototype.setupRedisLoops = function() {
   }, self.pollingInterval);
   
   setInterval(function() {
-    if (self.buffer.length > 0) {
+    if (!_.isEmpty(self.buffer)) {
       self.recordHits();
     }
   }, self.bufferingInterval);
