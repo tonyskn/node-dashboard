@@ -1,5 +1,7 @@
 
-(function(socketAddress, containerId, wantedKeys) {
+var Dashboard = function(containerId, wantedKeys, socketAddress) {
+  socketAddress = socketAddress || "/";
+
 /*!
   * $script.js Async loader & dependency manager
   * https://github.com/ded/script.js
@@ -85,4 +87,4 @@
       }
     });
   });
-})("%socket_address%", "%container_id%", "%wanted_keys%");
+};

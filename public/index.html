@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="bower_components/bootstrap-sass/bootstrap-2.3.2.css">
     <link rel="stylesheet" href="bower_components/bootstrap-sass/bootstrap-responsive-2.3.2.css">
 
+    <script src="/dashboard.js"></script>
   </head>
   <body>
     <div class="container-fluid">
@@ -16,6 +17,8 @@
       <div id="stats" class="row-fluid"></div>
     </div>
 
-    <script src="/widget.js?container=stats"></script>
+    <script>
+      Dashboard("stats", (location.search.match(new RegExp("keys=(.*?)($|\&)", "i")) || [])[1]); 
+    </script>
   </body>
 </html>

@@ -1,36 +1,20 @@
 
-var async = require('async'),
-    _ = require('underscore'),
-    fs = require('fs'),
+var _ = require('underscore'),
 
     express = require('express'),
-    http = require('http'),
     app = express(),
-    server = http.createServer(app),
+    server = require('http').createServer(app),
     io = require('socket.io').listen(server, {log: false}),
 
     HitsHandler = require('./hitsHandler'),
     // Init handler
     // Parameter: polling interval in ms
-    handler = new HitsHandler(5000);
+    handler = new HitsHandler(3000);
   
+
 /** Website's location */
 app.use(express.static(__dirname + '/../public'));
 
-
-var readWidget = async.memoize(function(callback) {
-  fs.readFile(__dirname + '/../widget/widget.js', {encoding: 'utf-8'}, callback);
-});
-
-/** Widget code! */
-app.get("/widget.js", function(req, res) {
-  readWidget(function(err, js) {
-    res.set("Content-Type", "text/javascript");
-    res.send(js.replace("%socket_address%", "/")
-               .replace("%container_id%", req.query.container)
-               .replace("%wanted_keys%", req.query.keys || ""));  
-  }); 
-});
 
 /** Start listening on Redis channels */
 handler.start();
